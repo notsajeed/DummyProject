@@ -1,0 +1,59 @@
+pipeline {
+    agent any
+
+    tools {
+        maven 'Maven-3.9'   // must match name in Jenkins Global Tool Config
+        jdk   'JDK-11'      // must match name in Jenkins Global Tool Config
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                // Pulls source from SCM (Git repo configured in Jenkins job)
+                checkout scm
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'mvn clean compile'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh 'mvn test'
+            }
+            post {
+                always {
+                    // Publishes JUnit test results in Jenkins UI
+                    junit '**/target/surefire-reports/*.xml'
+                }
+            }
+        }
+
+        stage('Package') {
+            steps {
+                sh 'mvn package -DskipTests'
+            }
+            post {
+                success {
+                    // Archives the JAR so it's downloadable from Jenkins
+                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                }
+            }
+        }
+
+        stage('Run') {
+            steps {
+                sh 'java -jar target/my-app.jar'
+            }
+        }
+    }
+
+    post {
+        success { echo 'Build succeeded!' }
+        failure { echo 'Build failed!' }
+    }
+}
