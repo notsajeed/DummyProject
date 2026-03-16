@@ -2,27 +2,24 @@ pipeline {
     agent any
 
     stages {
-
         stage('Checkout') {
             steps {
-                // Pulls source from SCM (Git repo configured in Jenkins job)
                 checkout scm
             }
         }
 
         stage('Build') {
             steps {
-                sh 'mvn clean compile'
+                bat 'mvn clean compile'
             }
         }
 
         stage('Test') {
             steps {
-                sh 'mvn test'
+                bat 'mvn test'
             }
             post {
                 always {
-                    // Publishes JUnit test results in Jenkins UI
                     junit '**/target/surefire-reports/*.xml'
                 }
             }
@@ -30,11 +27,10 @@ pipeline {
 
         stage('Package') {
             steps {
-                sh 'mvn package -DskipTests'
+                bat 'mvn package -DskipTests'
             }
             post {
                 success {
-                    // Archives the JAR so it's downloadable from Jenkins
                     archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
                 }
             }
@@ -42,7 +38,7 @@ pipeline {
 
         stage('Run') {
             steps {
-                sh 'java -jar target/my-app.jar'
+                bat 'java -jar target/my-app.jar'
             }
         }
     }
